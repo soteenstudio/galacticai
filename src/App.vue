@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { ref, nextTick, onMounted } from 'vue';
-import { sendChatMessage } from './services/aiService';
-
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import { sendChatMessage, type ChatMessage } from './services/aiService';
 
 const userName = ref('Clay');
 const userInput = ref('');
-const messages = ref<Message[]>([]);
+const messages = ref<ChatMessage[]>([]);
+const conversationHistory = ref<ChatMessage[]>([]);
 const loading = ref(false);
 const chatContainer = ref<HTMLElement | null>(null);
 
@@ -57,7 +53,12 @@ const sendMessage = async (textToSend?: string) => {
   await scrollToBottom();
 
   try {
-    const aiResponse = await sendChatMessage(query);
+    const aiResponse = await sendChatMessage(query, conversationHistory.value);
+
+    conversationHistory.value.push(
+      { role: 'user', content: query },
+      { role: 'assistant', content: aiResponse },
+    );
 
     messages.value.push({
       role: 'assistant',
@@ -80,6 +81,7 @@ const newChat = () => {
   if (loading.value) return;
 
   messages.value = [];
+  conversationHistory.value = [];
   userInput.value = '';
 };
 </script>
@@ -101,31 +103,6 @@ const newChat = () => {
       <!-- Left -->
       <div class="flex items-center gap-3 pointer-events-auto">
 
-        <!-- Menu -->
-        <button
-          type="button"
-          :class="[
-            'p-2.5 rounded-2xl border backdrop-blur-xl shadow-lg transition-colors',
-            isDark
-              ? 'text-neutral-400 bg-neutral-950/80 border-neutral-800 hover:text-white hover:bg-neutral-900'
-              : 'text-neutral-600 bg-white/80 border-neutral-200 hover:text-black hover:bg-neutral-50'
-          ]"
-          aria-label="Menu"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M4 6h16M4 12h16M4 18h16"
-            />
-          </svg>
-        </button>
 
         <!-- App Name -->
         <div
@@ -378,31 +355,6 @@ const newChat = () => {
         ]"
       >
 
-        <!-- Attach -->
-        <button
-          type="button"
-          :class="[
-            'p-2 transition-colors',
-            isDark
-              ? 'text-neutral-500 hover:text-white'
-              : 'text-neutral-400 hover:text-black'
-          ]"
-          aria-label="Attach"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-        </button>
 
         <!-- Input -->
         <input
@@ -418,39 +370,6 @@ const newChat = () => {
           ]"
         />
 
-        <!-- Voice -->
-        <button
-          type="button"
-          :class="[
-            'p-2 transition-colors',
-            isDark
-              ? 'text-neutral-500 hover:text-white'
-              : 'text-neutral-400 hover:text-black'
-          ]"
-          aria-label="Voice input"
-        >
-          <svg
-            class="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-width="2"
-              d="M19 11a7 7 0 01-14 0m7 7v4m0 0H8m4 0h4"
-            />
-
-            <rect
-              x="9"
-              y="3"
-              width="6"
-              height="11"
-              rx="3"
-              stroke-width="2"
-            />
-          </svg>
-        </button>
 
         <!-- Send -->
         <button
